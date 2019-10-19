@@ -499,6 +499,7 @@ void ConvertPasswordToPasswordString ( void )
 
 boolean ParseConfigFile (void)
 {
+   printf("ParseConfigFile :: \n");
 //   int temp;
    boolean retval = true;
    int version    = 0;
@@ -910,6 +911,7 @@ boolean ParseBattleFile (void)
 
 void SetBattleDefaultValues (void)
 {
+   printf("SetBattleDefaultValues :: \n");
    int index;
 
    //
@@ -958,6 +960,7 @@ void SetBattleDefaultValues (void)
 
 void SetConfigDefaultValues (void)
 {
+   printf("SetConfigDefaultValues :: \n");
    //
    //  no config file, so select default values
    //
@@ -1015,6 +1018,8 @@ void ReadConfig (void)
 {
    char filename[ 128 ];
 
+   printf("ReadConfig :: start\n");
+   
    GetPathFromEnvironment( filename, ApogeePath, SoundName );
    SetSoundDefaultValues ();
 
@@ -1070,6 +1075,8 @@ void ReadConfig (void)
       }
 #endif
    ConfigLoaded = true;
+   printf("ReadConfig :: finished\n");
+   
 }
 
 //******************************************************************************
@@ -2094,6 +2101,7 @@ void WriteConfig (void)
 
 void GetAlternatePath (char * tokenstr, AlternateInformation *info)
 {
+   printf("GetAlternatePath :: %s\n", tokenstr);
    strcpy (&info->path[0], ".\0");
    GetToken (true);
    if (!stricmp (token, tokenstr))
@@ -2115,6 +2123,8 @@ void GetAlternateFile (char * tokenstr, AlternateInformation *info)
 {
    // Read in remote sound file
    //
+   printf("GetAlternateFile :: %s\n", tokenstr);
+	
    strcpy (&info->file[0], "foo.foo\0");
    GetToken (true);
    if (!stricmp (token, tokenstr))
@@ -2149,12 +2159,16 @@ void ReadSETUPFiles (void)
    char filename[ 128 ];
    int i;
 
+   printf("ReadSETUPFiles :: \n");
    RemoteSounds.avail   = false;
 //   PlayerGraphics.avail = false;
    GameLevels.avail     = false;
    BattleLevels.avail   = false;
 
    GetPathFromEnvironment( filename, ApogeePath, CONFIG );
+   printf("ReadSETUPFiles :: filename = %s\n", filename);
+   printf("ReadSETUPFiles :: ApogeePath = %s\n", ApogeePath);
+   
    if (access (filename, F_OK) == 0)
    {
       LoadScriptFile (filename);

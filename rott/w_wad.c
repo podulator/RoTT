@@ -81,6 +81,8 @@ static byte *lumpcheck;
 
 void W_AddFile (char *_filename)
 {
+	    printf("W_AddFile - looking for :: %s\n", _filename);
+
         wadinfo_t               header;
         lumpinfo_t              *lump_p;
         unsigned                i;
@@ -101,10 +103,10 @@ void W_AddFile (char *_filename)
 #endif
 		//bna section start
 		if (access (filename, 0) != 0) {
-			strcpy (buf,"Error, Could not find User file '");
+			strcpy (buf,"Error, Could not find User file - '");
 			strcat (buf,filename);
 			strcat (buf,"', ignoring file");
-			printf("%s", buf);
+			printf("%s\n", buf);
 		}
 		//bna section end
 
@@ -171,6 +173,7 @@ void W_AddFile (char *_filename)
                 lump_p->size = LONG(fileinfo->size);
                 strncpy (lump_p->name, fileinfo->name, 8);
         }
+        printf("W_AddFile - exit\n");
 }
 
 
@@ -232,11 +235,14 @@ void W_InitMultipleFiles (char **filenames)
 //
 // open all the files, load headers, and count lumps
 //
+	printf("W_InitMultipleFiles :: enter\n");
         numlumps = 0;
         lumpinfo = SafeMalloc(5);   // will be realloced as lumps are added
 
-        for ( ; *filenames ; filenames++)
+        for ( ; *filenames ; filenames++) {
+			printf("W_InitMultipleFiles :: adding file - %s\n", *filenames);
                 W_AddFile (*filenames);
+		}
 
         if (!numlumps)
                 Error ("W_InitFiles: no files found");
@@ -258,6 +264,7 @@ void W_InitMultipleFiles (char **filenames)
         if (!SOUNDSETUP)
 #endif
            W_CheckWADIntegrity ();
+		printf("W_InitMultipleFiles :: exit\n");
 }
 
 

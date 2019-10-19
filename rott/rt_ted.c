@@ -1385,15 +1385,19 @@ void CheckRTLVersion
    )
 
    {
+   printf("CheckRTLVersion :: enter\n");
    int  filehandle;
    char RTLSignature[ 4 ];
    unsigned int RTLVersion;
 
+   //FixFilePath(filename);
+   printf("CheckRTLVersion :: SafeOpenRead\n");
    filehandle = SafeOpenRead( filename );
 
    //
    // Load RTL signature
    //
+   printf("CheckRTLVersion :: SafeRead- Signature\n");
    SafeRead( filehandle, RTLSignature, sizeof( RTLSignature ) );
 
    if ( ( strcmp( RTLSignature, COMMBAT_SIGNATURE ) != 0 ) &&
@@ -1405,7 +1409,9 @@ void CheckRTLVersion
    //
    // Check the version number
    //
+   printf("CheckRTLVersion :: SafeRead- Version number\n");
    SafeRead( filehandle, &RTLVersion, sizeof( RTLVersion ) );
+   printf("CheckRTLVersion :: SwapIntelLong\n");
    SwapIntelLong(&RTLVersion);
    if ( RTLVersion > RTL_VERSION )
       {
@@ -1417,6 +1423,7 @@ void CheckRTLVersion
       }
 
    close( filehandle );
+   printf("CheckRTLVersion :: exit\n");
    }
 
 
@@ -1435,6 +1442,8 @@ void ReadROTTMap
    )
 
    {
+	   
+   printf("ReadROTTMap :: enter - filename: %s, mapnum: %i\n", filename, mapnum);
    RTLMAP RTLMap;
    int    filehandle;
    long   pos;
@@ -1443,24 +1452,34 @@ void ReadROTTMap
    int    plane;
    byte  *buffer;
 
+
 #if (SHAREWARE==0) && (USEHOMEPATH==1)
+   printf("ReadROTTMap :: using shareware and home path\n";
    char buf[MAX_PATH];
    snprintf(buf, MAX_PATH, "%s/.rott/%s", getenv("HOME"), filename);
 
+   printf("ReadROTTMap :: CheckRTLVersion - %s\n", buf);
    CheckRTLVersion( buf );
    filehandle = SafeOpenRead( buf );
 #else
-   CheckRTLVersion( filename );
-   filehandle = SafeOpenRead( filename );
+   char fullname[MAX_PATH];
+   printf("ReadROTTMap :: GetPathFromEnvironment\n");
+   GetPathFromEnvironment(fullname, DATADIR, filename);
+   
+   printf("ReadROTTMap :: CheckRTLVersion - %s\n", fullname);
+   CheckRTLVersion( fullname );
+   filehandle = SafeOpenRead( fullname );
 #endif
-
+   printf("ReadROTTMap :: filehandle - %i\n", filehandle);
    //
    // Load map header
    //
+   printf("ReadROTTMap :: SafeRead\n");
    lseek( filehandle, RTL_HEADER_OFFSET + mapnum * sizeof( RTLMap ),
       SEEK_SET );
    SafeRead( filehandle, &RTLMap, sizeof( RTLMap ) );
 
+   printf("ReadROTTMap :: Swap section\n");
     SwapIntelLong((int *)&RTLMap.used);
     SwapIntelLong((int *)&RTLMap.CRC);
     SwapIntelLong((int *)&RTLMap.RLEWtag);
@@ -1489,6 +1508,7 @@ void ReadROTTMap
    mapheight = 128;
 
    // Get special map flags
+   printf("ReadROTTMap :: MapSpecials\n");
    MapSpecials = RTLMap.MapSpecials;
 
    //
@@ -1496,6 +1516,7 @@ void ReadROTTMap
    //
    expanded = mapwidth * mapheight * 2;
 
+    printf("ReadROTTMap :: load planes\n");
 	for( plane = 0; plane <= 2; plane++ )
       {
       pos        = RTLMap.planestart[ plane ];
@@ -1520,11 +1541,15 @@ void ReadROTTMap
 		SafeFree( buffer );
       }
    close(filehandle);
+   printf("ReadROTTMap :: planes loaded\n");
 
    //
    // get map name
    //
+   printf("ReadROTTMap :: strcpy\n");
    strcpy( LevelName, RTLMap.Name );
+   
+   printf("ReadROTTMap :: exit\n");
    }
 
 
@@ -1649,6 +1674,7 @@ void GetMapFileInfo
 */
 void GetMapFileName ( char * filename )
 {
+   printf("GetMapFileName :: input - %s\n", filename);
    if ( ( BATTLEMODE ) && (BattleLevels.avail == true) )
       {
       strcpy(filename,BattleLevels.file);
@@ -1665,6 +1691,12 @@ void GetMapFileName ( char * filename )
       {
       strcpy(filename,ROTTMAPS);
       }
+   // now fix the path
+   char * fullname;
+   GetPathFromEnvironment( fullname, DATADIR, filename );
+   filename = fullname;
+   printf("GetMapFileName :: outcome - %s\n", filename);
+   
 }
 
 /*
@@ -1676,9 +1708,11 @@ void GetMapFileName ( char * filename )
 */
 void SetBattleMapFileName ( char * filename )
 {
+   printf("SetBattleMapFileName :: filename - %s\n", filename);
    BattleLevels.avail = true;
    memset (&(BattleLevels.file[0]), 0, sizeof (BattleLevels.file));
    strcpy (&(BattleLevels.file[0]), filename);
+   printf("SetBattleMapFileName :: exit\n");
 }
 
 /*
@@ -1745,6 +1779,7 @@ void GetMapInfo
    )
 
    {
+   printf("GetMapInfo :: entry\n");
    if ( ( BATTLEMODE ) && ( BattleLevels.avail == true ) )
       {
       GetAlternateMapInfo( mapinfo, &BattleLevels );
@@ -1761,6 +1796,7 @@ void GetMapInfo
       {
       GetMapFileInfo( mapinfo, ROTTMAPS );
       }
+   printf("GetMapInfo :: exit\n");
    }
 
 /*
@@ -1788,6 +1824,7 @@ void LoadTedMap
    char    name[ 200 ];
    mapfiletype *tinf;
 
+   printf("LoadTedMap :: enter\n");
    //
    // load maphead.ext (offsets and tileinfo for map file)
    //
@@ -1873,6 +1910,8 @@ void LoadTedMap
       {
       Error( "Error closing Ted file Error #%d", errno );
       }
+      
+         printf("LoadTedMap :: exit\n");
    }
 
 
@@ -1907,26 +1946,33 @@ void LoadROTTMap
    )
 
    {
+   printf("LoadROTTMap :: enter\n");
    if ( tedlevel == true )
       {
+	  printf("LoadROTTMap :: LoadTedMap\n");
       LoadTedMap( "rot", mapnum );
       }
    else if ( ( BATTLEMODE ) && ( BattleLevels.avail == true ) )
       {
+	  printf("LoadROTTMap :: LoadAlternateMap\n");
       LoadAlternateMap( &BattleLevels, mapnum );
       }
    else if ( GameLevels.avail == true )
       {
+	  printf("LoadROTTMap :: LoadAlternateMap\n");
       LoadAlternateMap( &GameLevels, mapnum );
       }
    else if ( BATTLEMODE )
       {
+	  printf("LoadROTTMap :: ReadROTTMap\n");
       ReadROTTMap( BATTMAPS, mapnum );
       }
    else
       {
+	  printf("LoadROTTMap :: ReadROTTMap\n");
       ReadROTTMap( ROTTMAPS, mapnum );
       }
+   printf("LoadROTTMap :: exit\n");
    }
 
 
@@ -5686,6 +5732,7 @@ void DoLowMemoryConversion (void)
 */
 void SetupGameLevel (void)
 {
+	printf("SetupGameLevel - enter\n");
 	int crud;
 	int i;
 
@@ -5709,39 +5756,54 @@ void SetupGameLevel (void)
 
 	insetupgame=true;
 
+   printf("SetupGameLevel - InitializeRNG\n");
    InitializeRNG ();
 
-	if ((demoplayback==true) || (demorecord==true))
+	if ((demoplayback==true) || (demorecord==true)) {
+	  printf("SetupGameLevel - SetRNGindex\n");
       SetRNGindex ( 0 );
+	}
 
-   if (gamestate.randomseed!=-1)
+   if (gamestate.randomseed!=-1) {
+	  printf("SetupGameLevel - SetRNGindex\n");
       SetRNGindex ( gamestate.randomseed );
+   }
 
+    printf("SetupGameLevel - tedlevel - enter\n");
 	if (tedlevel)
 		{
+		printf("SetupGameLevel - tedlevel - GetEpisode\n");
 		GetEpisode (tedlevelnum);
+		printf("SetupGameLevel - not tedlevel - LoadROTTMap\n");
 		LoadROTTMap(tedlevelnum);
 		gamestate.mapon=tedlevelnum;
 		}
 	else
 		{
+		printf("SetupGameLevel - not tedlevel - GetEpisode\n");
 		GetEpisode (gamestate.mapon);
+		printf("SetupGameLevel - not tedlevel - LoadROTTMap\n");
 		LoadROTTMap(gamestate.mapon);
 		}
+   printf("SetupGameLevel - tedlevel - exit\n");
    if (DoPanicMapping())
       {
+		  printf("SetupGameLevel - DoLowMemoryConversion\n");
       DoLowMemoryConversion();
       }
    if ( gamestate.Product == ROTT_SHAREWARE )
       {
+		  printf("SetupGameLevel - DoSharewareConversion\n");
       DoSharewareConversion ();
       }
    else
       {
+		  printf("SetupGameLevel - DoRegisterConversion\n");
       DoRegisterConversion ();
       }
    if ( (NewGame) || (lastlevelloaded!=gamestate.mapon) )
 		{
+			printf("SetupGameLevel - SetupPreCache\n");
 		SetupPreCache();
 		lastlevelloaded=gamestate.mapon;
       MU_StartSong(song_level);
@@ -5756,12 +5818,16 @@ void SetupGameLevel (void)
 
 	// som of the code / calls below need bufferofs & friends to point
 	// to to the real screen, not the stretch buffer
+	printf("SetupGameLevel - DisableScreenStretch\n");
 	DisableScreenStretch();//bna++ shut off streech mode
 
+	printf("SetupGameLevel - InitializePlayerstates\n");
 	InitializePlayerstates();
 
+	printf("SetupGameLevel - ResetCheatCodes\n");
 	ResetCheatCodes();
 
+	printf("SetupGameLevel - gamestates\n");
 	gamestate.killtotal     = gamestate.killcount     = 0;
 	gamestate.secrettotal   = gamestate.secretcount   = 0;
 	gamestate.treasuretotal = gamestate.treasurecount = 0;
@@ -5780,24 +5846,33 @@ void SetupGameLevel (void)
 	else if (gamestate.mapon == 33)
 	 SNAKELEVEL = 3;
 
+	printf("SetupGameLevel - InitAreas\n");
 	InitAreas();
+	printf("SetupGameLevel - InitDoorList\n");
 	InitDoorList();
+	printf("SetupGameLevel - InitElevators\n");
 	InitElevators();
+	
 	if (loadedgame==false)
 		{
+		printf("SetupGameLevel - loadedgame==false\n");
 		InitStaticList ();
 		InitActorList();
 		}
+	printf("SetupGameLevel - memsets\n");
 	memset (tilemap,0,sizeof(tilemap));
 	memset (actorat,0,sizeof(actorat));
 	memset (sprites,0,sizeof(sprites));
 	memset (mapseen,0,sizeof(mapseen));
 	memset (LightsInArea,0,sizeof(LightsInArea));
 
+	printf("SetupGameLevel - PrintTileStats\n");
 	PrintTileStats();
 
+	printf("SetupGameLevel - SetupLightLevels\n");
 	SetupLightLevels();
 
+	printf("SetupGameLevel -  crud starts\n");
    crud=(word)MAPSPOT(0,0,1);
 	if ((crud>=90) && (crud<=97))
 		{
@@ -5814,6 +5889,7 @@ void SetupGameLevel (void)
 	else
 		Error("You must specify a valid height sprite icon at (2,0) on map %d\n",gamestate.mapon);
 
+	printf("SetupGameLevel - crud ends\n");
 /*
    if ( ( BATTLEMODE ) && ( !gamestate.BattleOptions.SpawnDangers ) )
       {
@@ -5821,10 +5897,13 @@ void SetupGameLevel (void)
       }
 */
 // pheight=maxheight-32;
-   CountAreaTiles();
+	printf("SetupGameLevel - CountAreaTiles\n");
+    CountAreaTiles();
+	printf("SetupGameLevel - SetupWalls\n");
 	SetupWalls();
-
+	printf("SetupGameLevel - SetupClocks\n");
 	SetupClocks();
+	printf("SetupGameLevel - SetupAnimatedWalls\n");
 	SetupAnimatedWalls();
 
 	if (loadedgame==false)
@@ -5908,7 +5987,10 @@ void SetupGameLevel (void)
 
 	tedlevel = false;   // turn it off once we have done any ted stuff
 	
+	printf("SetupGameLevel - EnableScreenStretch\n");
 	EnableScreenStretch();
+
+	printf("SetupGameLevel - exit\n");
 }
 
 

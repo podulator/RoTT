@@ -83,9 +83,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //    Global Constants
 //
 //***************************************************************************
+#ifndef ROTT_VERSION
+#define ROTT_VERSION	"0.0.2"
+#endif
 
 #ifndef DATADIR
-#define DATADIR	""
+#define DATADIR	"/media/home/.rott/data/"
 #endif
 
 #undef PI

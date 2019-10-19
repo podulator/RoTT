@@ -184,6 +184,8 @@ int main (int argc, char *argv[])
 	_argv = argv;
 #endif
 
+	// defined in rt_def.h
+	printf("Main :: Hello Rott - V. %s\n", ROTT_VERSION);
 #if defined(PLATFORM_MACOSX)
     {
         /* OS X will give us a path in the form '/Applications/Rise of the Triad.app/Contents/MacOS/Rise of the Triad'.
@@ -198,14 +200,14 @@ int main (int argc, char *argv[])
         for (end = strlen(path)-1; end >= 0 && path[end] != '/'; end--);
         if (end >= 0) for (--end; end >= 0 && path[end] != '/'; end--);
         strcpy(&path[end], suffix);
-        printf("Changing to working directory: %s\n", path);
+        printf("Main :: Changing to working directory: %s\n", path);
         chdir(path);
         free(path);
     }
 #endif
 
 #ifndef DOS
-   signal (11, crash_print);
+   //signal (11, crash_print);
 
    if (setup_homedir() == -1) return 1;
 #endif
@@ -230,25 +232,35 @@ int main (int argc, char *argv[])
    StartupSoftError();
 //   UL_ErrorStartup ();
 
+   printf("Main :: CheckCommandLineParameters\n");
    CheckCommandLineParameters();
 
    // Start up Memory manager with a certain amount of reserved memory
 
    Z_Init(50000,1000000);
 
+   printf("Main :: IN_Startup\n");
    IN_Startup ();
 
+   printf("Main :: InitializeGameCommands\n");
    InitializeGameCommands();
    if (standalone==false)
       {
+	  printf("Main :: standalone==false\n");
+	  printf("Main :: ReadConfig\n");
       ReadConfig ();
+      printf("Main :: ReadSETUPFiles\n");
       ReadSETUPFiles ();
       doublestep=0;
+	  printf("Main :: SetupWads\n");
       SetupWads();
+	  printf("Main :: BuildTables\n");
       BuildTables ();
+	  printf("Main :: GetMenuInfo\n");
       GetMenuInfo ();
       }
 
+   printf("Main :: SetRottScreenRes\n");
    SetRottScreenRes (iGLOBAL_SCREENWIDTH, iGLOBAL_SCREENHEIGHT);
    
 //   if (modemgame==true)
@@ -336,9 +348,13 @@ int main (int argc, char *argv[])
          }
 #endif
 
+      printf("Main :: Init_Tables\n");
       Init_Tables ();
+	  printf("Main :: InitializeRNG\n");
       InitializeRNG ();
+	  printf("Main :: InitializeMessages\n");
       InitializeMessages();
+	  printf("Main :: LoadColorMap\n");
       LoadColorMap();
       }
    if (infopause==true)
@@ -365,10 +381,14 @@ int main (int argc, char *argv[])
 #endif
    locplayerstate = &PLAYERSTATE[consoleplayer];
 
-   if (standalone==true)
+   if (standalone==true) {
+	  printf("Main :: ServerLoop\n");
       ServerLoop();
+   }
 
+   printf("Main :: VL_SetVGAPlaneMode\n");
    VL_SetVGAPlaneMode();
+   printf("Main :: VL_SetPalette\n");
    VL_SetPalette(origpal);
 
 //   SetTextMode();
@@ -377,6 +397,7 @@ int main (int argc, char *argv[])
 //   VL_SetVGAPlaneMode();
 //   VL_SetPalette(origpal);
 //   SetBorderColor(155);
+   printf("Main :: SetViewSize\n");
    SetViewSize(8);
 
 #ifdef DOS
@@ -393,6 +414,7 @@ int main (int argc, char *argv[])
 
    gamestate.battlemode = battle_StandAloneGame;
 
+   printf("Main :: BATTLE_SetOptions\n");
    BATTLE_SetOptions( &BATTLE_Options[ battle_StandAloneGame ] );
 
    if (turbo || tedlevel)
@@ -428,17 +450,19 @@ int main (int argc, char *argv[])
             LBM = (lbm_t *) W_CacheLumpName( "svendor", PU_CACHE, Cvt_lbm_t, 1);
             VL_DecompressLBM (LBM,true);
             I_Delay(40);
+		    printf("Main :: MenuFadeOut\n");
             MenuFadeOut();
             }
 //         ParticleIntro ();
+         printf("Main :: ApogeeTitle\n");
          ApogeeTitle();
          }
 #endif
       }
-
+   printf("Main :: GameLoop\n");
    GameLoop();
 
-
+   printf("Main :: QuitGame\n");
    QuitGame();
    
    return 0;
@@ -819,6 +843,7 @@ void CheckCommandLineParameters( void )
 
 void SetupWads( void )
 {
+   printf("Main -> SetupWads - enter\n");
    char  *newargs[99];
    int i, arg, argnum = 0;
    char tempstr[129];
@@ -863,7 +888,8 @@ void SetupWads( void )
 
 
 #if (SHAREWARE==0)
-   // Check for rtl files 	
+   // Check for rtl files
+   printf("Main -> SetupWads - SHAREWARE == 0\n");
    arg = CheckParm ("filertl");
    if (arg!=0)
    {
@@ -968,8 +994,10 @@ NoRTC:;
    // Normal ROTT wads
 
 #if (SHAREWARE)
+   printf("Main -> SetupWads - SHAREWARE Wad\n");
    newargs [argnum++] = DATADIR "HUNTBGIN.WAD";
 #else
+   printf("Main -> SetupWads - DARKWAR Wad\n");
    newargs [argnum++] = DATADIR "DARKWAR.WAD";
 #endif
 
@@ -995,7 +1023,10 @@ NoRTC:;
 
    newargs [argnum++] = NULL;
 
+   printf("Main -> SetupWads - W_InitMultipleFiles\n");
    W_InitMultipleFiles(newargs);
+   
+   printf("Main -> SetupWads - exit\n");
 }
 
 void PlayTurboGame
@@ -1098,6 +1129,7 @@ void GameLoop (void)
    boolean loadit = false;
    int NextLevel;
 
+   printf("Main :: GameLoop - enter\n");
    wami(1);
 
 	while (1)
@@ -1153,6 +1185,7 @@ void GameLoop (void)
 		   {
          case ex_titles:
 		 
+			printf("Main :: GameLoop - ex_titles\n");
             BATTLE_Shutdown();
             MU_StartSong(song_title);
 			EnableScreenStretch();
@@ -1251,18 +1284,26 @@ void GameLoop (void)
 
          case ex_resetgame:
 
-  // SetTextMode (  ); //12345678
-	    EnableScreenStretch();//bna++ shut on streech mode 
+			printf("Main :: GameLoop - ex_resetgame\n");
+			// SetTextMode (  ); //12345678
+			printf("Main :: GameLoop - ex_resetgame - enable screen stretch\n");
+	        EnableScreenStretch();//bna++ shut on streech mode 
+			printf("Main :: GameLoop - ex_resetgame - init character\n");
             InitCharacter();
 
+			printf("Main :: GameLoop - ex_resetgame - initialize messages\n");
             InitializeMessages();
 
             fizzlein = true;
+			printf("Main :: GameLoop - ex_resetgame - BATTLE_GetSpecials\n");
             BATTLE_GetSpecials();
+			
+			printf("Main :: GameLoop - ex_resetgame - BATTLE_SetOptions\n");
             BATTLE_SetOptions( &BATTLE_Options[ gamestate.battlemode ] );
 
             if ( modemgame == true )
                {
+			   printf("Main :: GameLoop - ex_resetgame - modemgame == true\n");
                fizzlein = false;
 
                if ( consoleplayer == 0 )
@@ -1305,8 +1346,10 @@ void GameLoop (void)
                   }
                }
 
+			printf("Main :: GameLoop - ex_resetgame - InitCharacter\n");
             InitCharacter();
 
+			printf("Main :: GameLoop - ex_resetgame - BATTLE_Init\n");
             BATTLE_Init( gamestate.battlemode, numplayers );
 
             NewGame = true;
@@ -1324,24 +1367,29 @@ void GameLoop (void)
                {
                if ( !BATTLEMODE )
                   {
+				  printf("Main :: GameLoop - ex_resetgame - PlayCinematic\n");
                   PlayCinematic();
                   }
-
+               printf("Main :: GameLoop - ex_resetgame - SetupGameLevel\n");
                SetupGameLevel();
                }
 
-            IN_ClearKeyboardQueue();
-
-				SetupScreen (true);
-
+			printf("Main :: GameLoop - ex_resetgame - IN_ClearKeyboardQueue\n");
+			IN_ClearKeyboardQueue();
+			printf("Main :: GameLoop - ex_resetgame - SetupScreen\n");
+			SetupScreen (true);
+            printf("Main :: GameLoop - ex_resetgame - MenuFixup\n");
             MenuFixup ();
             playstate=ex_stillplaying;
+            printf("Main :: GameLoop - ex_resetgame - DisableScreenStretch\n");
+	        DisableScreenStretch();//bna++ shut off streech mode
 
-	    DisableScreenStretch();//bna++ shut off streech mode
-
+			printf("Main :: GameLoop - ex_resetgame -> ends\n");
          break;
 
          case ex_stillplaying:
+			 
+			printf("Main :: GameLoop - ex_stillplaying\n");
             InitializeMessages();
 
             SHAKETICS = 0xFFFF;
@@ -1358,6 +1406,8 @@ void GameLoop (void)
          break;
 
          case ex_died:
+			 
+			 printf("Main :: GameLoop - ex_died\n");
             loadit = done = false;
 //		   SetTextMode (  ); //12345678
             Died ();
@@ -1418,6 +1468,7 @@ void GameLoop (void)
             break;
 
          case ex_warped:
+			 printf("Main :: GameLoop - exwarped\n");
             StopWind();
             TurnShakeOff();
             SHAKETICS = 0xffff;
@@ -1438,6 +1489,7 @@ void GameLoop (void)
          case ex_completed:
          case ex_bossdied:
 
+			 printf("Main :: GameLoop - ex_skiplevel\n");
             ShutdownClientControls();
             TurnShakeOff();
             SHAKETICS = 0xffff;
@@ -1533,6 +1585,7 @@ void GameLoop (void)
          break;
 
          case ex_demodone:
+			 printf("Main :: GameLoop - ex_demodone\n");
             ingame=false;
             ShutdownClientControls();
             TurnShakeOff();
@@ -1552,6 +1605,7 @@ void GameLoop (void)
          break;
 
          case ex_gameover:
+			 printf("Main :: GameLoop - ex_gameover\n");
             StopWind();
             DoEndCinematic();
             if (playstate==ex_gameover)
@@ -1565,6 +1619,7 @@ void GameLoop (void)
          break;
 
          case ex_demorecord:
+			 printf("Main :: GameLoop - ex_demorecord\n");
             ShutdownClientControls();
             Z_FreeTags (PU_LEVELSTRUCT, PU_LEVELEND);       // Free current level
 
@@ -1576,6 +1631,7 @@ void GameLoop (void)
          break;
 
          case ex_demoplayback:
+			 printf("Main :: GameLoop - ex_demoplayback\n");
             ShutdownClientControls();
             Z_FreeTags (PU_LEVELSTRUCT, PU_LEVELEND);       // Free current level
 
@@ -1586,6 +1642,7 @@ void GameLoop (void)
             playstate = ex_stillplaying;
          break;
 	 default:
+		 printf("Main :: GameLoop - default\n");
 	     ;
          }
       }
@@ -3395,10 +3452,11 @@ int PutBytes (unsigned char *ptr, unsigned int bytes)
 
 void PlayCinematic (void)
 {
-
+   printf("Main :: PlayCinematic - enter\n");
    if ((tedlevel == true) || (turbo == true))
       return;
 
+   printf("Main :: PlayCinematic - switch - %i\n", gamestate.mapon);
    switch (gamestate.mapon)
    {
 #if (SHAREWARE == 0)
@@ -3499,4 +3557,5 @@ void PlayCinematic (void)
       break;
 #endif
    }
+   printf("Main :: PlayCinematic - exit\n");
 }

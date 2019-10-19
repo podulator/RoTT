@@ -666,10 +666,15 @@ int SafeOpenWrite (char *_filename)
 
 int SafeOpenRead (char *_filename)
 {
+	printf("SafeOpenRead :: enter - %s\n", _filename);
 	int	handle;
     char filename[MAX_PATH];
+	
+	printf("SafeOpenRead :: strncpy\n");
     strncpy(filename, _filename, sizeof (filename));
     filename[sizeof (filename) - 1] = '\0';
+
+    printf("SafeOpenRead :: FixFilePath - %s\n", filename);
     FixFilePath(filename);
 
 	handle = open(filename,O_RDONLY | O_BINARY);
@@ -677,6 +682,7 @@ int SafeOpenRead (char *_filename)
 	if (handle == -1)
 		Error ("Error opening %s: %s",filename,strerror(errno));
 
+	printf("SafeOpenRead :: exit - handle %i\n", handle);
 	return handle;
 }
 
@@ -801,6 +807,7 @@ void FixFilePath(char *filename)
     char *ptr;
     char *lastsep = filename;
 
+	printf("FixFilePath - looking for :: %s\n", filename);
     if ((!filename) || (*filename == '\0'))
         return;
 
@@ -860,6 +867,8 @@ void FixFilePath(char *filename)
             *ptr = pch;
             lastsep = ptr;
 
+			printf("FixFilePath - finally :: %s\n", filename);
+			
             if (dent == NULL)
                 return;  /* no match. oh well. */
 
@@ -1017,6 +1026,7 @@ void _dos_getdate(struct dosdate_t *date)
 void GetPathFromEnvironment( char *fullname, const char *envname, const char *filename )
    {
 
+	   printf("GetPathFromEnvironment :: enter\n");
 #ifdef DOS
    char *path;
    path = getenv( envname );
@@ -1027,19 +1037,26 @@ void GetPathFromEnvironment( char *fullname, const char *envname, const char *fi
 
    if ( path != NULL )
       {
+	  printf("GetPathFromEnvironment :: strcpy - path\n");
       strcpy( fullname, path );
       if ( fullname[ strlen( fullname ) - 1 ] != PATH_SEP_CHAR )
          {
+		 printf("GetPathFromEnvironment :: strcat - path se char\n");
          strcat( fullname, PATH_SEP_STR );
          }
+	  printf("GetPathFromEnvironment :: strcat - all of it\n");
       strcat( fullname, filename );
       }
    else
       {
+	  printf("GetPathFromEnvironment :: strcpy - no path\n");
       strcpy( fullname, filename );
       }
 
+      printf("GetPathFromEnvironment :: FixFilePath - %s\n", fullname);
       FixFilePath(fullname);
+      printf("GetPathFromEnvironment :: %s - envname = %s\n", fullname, envname);
+      printf("GetPathFromEnvironment :: exit\n");
    }
 
 void DefaultExtension (char *path, char *extension)
